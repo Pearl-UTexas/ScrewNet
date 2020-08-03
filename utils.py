@@ -103,6 +103,7 @@ def detect_model_class(mv_frames):
     model_class_name = 'revolute'
     return model_class_name
 
+
 def all_combinations(n):
     idxs = []
     for r in np.arange(2, n + 1):

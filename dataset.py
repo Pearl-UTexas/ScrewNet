@@ -1,10 +1,10 @@
-import os
-
 import h5py
 import numpy as np
+import os
 import torch
 from torch.utils.data import Dataset
-from ScrewNet.utils import transform_to_screw, change_frames, transform_plucker_line
+
+from utils import transform_to_screw, change_frames, transform_plucker_line
 
 
 class ArticulationDataset(Dataset):
@@ -36,13 +36,6 @@ class ArticulationDataset(Dataset):
         # Load depth image
         depth_imgs = torch.tensor(obj_data['depth_imgs'])
 
-        if self.transform is not None:
-            depth_imgs = self.transform(depth_imgs)
-
-        depth_imgs.unsqueeze_(1).float()
-
-        depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
-
         # Load labels
         moving_body_poses = obj_data['moving_frame_in_world']
         label = np.empty((len(moving_body_poses) - 1, 8))
@@ -52,6 +45,14 @@ class ArticulationDataset(Dataset):
         pt1 = moving_body_poses[0, :]  # Fixed common reference frame
         obj_T_pt1 = change_frames(obj_pose_in_world, pt1)
 
+        # transform depth images
+        if self.transform is not None:
+            depth_imgs = self.transform((depth_imgs, torch.tensor(obj_pose_in_world[:3])))
+
+        depth_imgs.unsqueeze_(1).float()
+
+        depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
+
         for i in range(len(moving_body_poses) - 1):
             pt2 = moving_body_poses[i + 1, :]
             pt1_T_pt2 = change_frames(pt1, pt2)
@@ -59,8 +60,6 @@ class ArticulationDataset(Dataset):
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                     quat_in_wxyz=pt1_T_pt2[3:])
-
-            # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
 
             # Convert line in object_local_coordinates
             new_l = transform_plucker_line(np.concatenate((l_hat, m)), trans=obj_T_pt1[:3], quat=obj_T_pt1[3:])
@@ -76,7 +75,9 @@ class ArticulationDataset(Dataset):
         return sample
 
 
-### 2_imgs Dataset
+"""
+Data loader class for the 2-imgs ablated version 
+"""
 class RigidTransformDataset(Dataset):
     def __init__(self,
                  ntrain,

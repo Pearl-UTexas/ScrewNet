@@ -1,10 +1,10 @@
 import torch
-from ScrewNet.utils import distance_bw_plucker_lines, \
-    orientation_difference_bw_plucker_lines, theta_config_error, d_config_error
+
+from utils import distance_bw_plucker_lines, orientation_difference_bw_plucker_lines, theta_config_error, d_config_error
 
 
 def articulation_lstm_loss_spatial_distance(pred, target, wt_on_ortho=1.):
-    """ Based on Spatial distance
+    """ Based on Spatial distance. Please refer to the paper for more details.
         Input shapes: Batch X Objects X images
     """
     pred = pred.view(pred.size(0), -1, 8)[:, 1:, :]  # We don't need the first row as it is for single image
@@ -38,7 +38,7 @@ def articulation_lstm_loss_spatial_distance(pred, target, wt_on_ortho=1.):
 
 
 def articulation_lstm_loss_spatial_distance_RT(pred, target, wt_on_ortho=1.):
-    """ Based on Spatial distance
+    """ Based on Spatial distance. Used for the ablated version
         Input shapes: Batch X 8
     """
     pred = pred.unsqueeze_(1)

@@ -1,9 +1,9 @@
-import os
 import sys
 import time
 
 import matplotlib
 import numpy as np
+import os
 import torch
 from tensorboardX import SummaryWriter
 
@@ -11,7 +11,7 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
-from ScrewNet.utils import dual_quaternion_to_screw_batch_mode
+from utils import dual_quaternion_to_screw_batch_mode
 
 
 class ModelTrainer(object):
@@ -26,6 +26,7 @@ class ModelTrainer(object):
                  name,
                  test_freq,
                  device,
+                 plots_dir='plots/',
                  logs_dir='runs/',
                  ndof=1):
 
@@ -47,8 +48,16 @@ class ModelTrainer(object):
         # float model as push to GPU/CPU
         self.device = device
         self.model.float().to(self.device)
+        self.wts_dir = os.path.join(os.getcwd(), 'models')
+        os.makedirs(self.wts_dir, exist_ok=True)
+
+        # plots dir
+        self.plots_dir = os.path.join(os.getcwd(), plots_dir, self.name)
+        os.makedirs(self.plots_dir, exist_ok=True)
 
         # Tensorboard
+        logs_dir = os.path.join(os.getcwd(), logs_dir)
+        os.makedirs(logs_dir, exist_ok=True)
         self.writer = SummaryWriter(logs_dir + self.name)
         # self.writer.add_graph(self.model, self.trainloader)
 
@@ -68,7 +77,7 @@ class ModelTrainer(object):
 
                 if tloss < best_tloss:
                     print('saving model.')
-                    net_fname = 'models/' + str(self.name) + '.net'
+                    net_fname = os.path.join(self.wts_dir, str(self.name) + '.net')
                     torch.save(self.model.state_dict(), net_fname)
                     best_tloss = tloss
 
@@ -121,8 +130,7 @@ class ModelTrainer(object):
                 loss.backward()
 
                 # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-                # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 20.)
-                # torch.nn.utils.clip_grad_value_(self.model.parameters(), 1.)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 10.)
 
                 self.optimizer.step()
                 running_loss += loss.item()
@@ -154,7 +162,6 @@ class ModelTrainer(object):
         return running_loss / batches_per_dataset
 
     def plot_losses(self):
-        os.makedirs("plots/" + self.name, exist_ok=True)
         x = np.arange(len(self.losses))
         tx = np.arange(0, len(self.losses), self.test_freq)
         plt.plot(x, np.array(self.losses), color='b', label='train')
@@ -162,10 +169,10 @@ class ModelTrainer(object):
         plt.legend()
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
-        plt.savefig('plots/' + self.name + '/curve.png')
+        plt.savefig(os.path.join(self.plots_dir, 'curve.png'))
         plt.close()
-        np.save('plots/' + self.name + '/losses.npy', np.array(self.losses))
-        np.save('plots/' + self.name + '/tlosses.npy', np.array(self.tlosses))
+        np.save(os.path.join(self.plots_dir, 'losses.npy'), np.array(self.losses))
+        np.save(os.path.join(self.plots_dir, 'tlosses.npy'), np.array(self.tlosses))
 
     def test_best_model(self, best_model, fname_suffix='', dual_quat_mode=False):
         best_model.eval()  # Put model in evaluation mode
@@ -213,7 +220,7 @@ class ModelTrainer(object):
         plt.ylabel("Error")
         plt.title("Test error in l_hat")
         plt.tight_layout()
-        plt.savefig('plots/' + self.name + '/l_hat_err' + fname_suffix + '.png')
+        plt.savefig(os.path.join(self.plots_dir, 'l_hat_err' + fname_suffix + '.png'))
         plt.close(fig)
 
         fig = plt.figure(2)
@@ -222,7 +229,7 @@ class ModelTrainer(object):
         plt.ylabel("Error")
         plt.title("Test error in m")
         plt.tight_layout()
-        plt.savefig('plots/' + self.name + '/m_err' + fname_suffix + '.png')
+        plt.savefig(os.path.join(self.plots_dir, 'm_err' + fname_suffix + '.png'))
         plt.close(fig)
 
         fig = plt.figure(3)
@@ -231,7 +238,7 @@ class ModelTrainer(object):
         plt.ylabel("Error")
         plt.title("Test error in theta")
         plt.tight_layout()
-        plt.savefig('plots/' + self.name + '/theta_err' + fname_suffix + '.png')
+        plt.savefig(os.path.join(self.plots_dir, 'theta_err' + fname_suffix + '.png'))
         plt.close(fig)
 
         fig = plt.figure(4)
@@ -240,7 +247,7 @@ class ModelTrainer(object):
         plt.ylabel("Error")
         plt.title("Test error in d")
         plt.tight_layout()
-        plt.savefig('plots/' + self.name + '/d_err' + fname_suffix + '.png')
+        plt.savefig(os.path.join(self.plots_dir, 'd_err' + fname_suffix + '.png'))
         plt.close(fig)
 
     def plot_grad_flow(self, named_parameters):
@@ -272,4 +279,4 @@ class ModelTrainer(object):
         plt.legend([Line2D([0], [0], color="c", lw=4),
                     Line2D([0], [0], color="b", lw=4),
                     Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
-        plt.savefig('plots/' + self.name + '/grad_flow.png')
+        plt.savefig(os.path.join(self.plots_dir, 'grad_flow.png'))

@@ -1,19 +1,14 @@
 import argparse
 import copy
-import os
-import sys
-
 import matplotlib
 import numpy as np
+import os
 import torch
-from ScrewNet.dataset import ArticulationDataset, RigidTransformDataset
-from ScrewNet.models import ScrewNet, ScrewNet_2imgs, ScrewNet_NoLSTM
-from ScrewNet.utils import distance_bw_plucker_lines, difference_between_quaternions_tensors, interpret_labels_ours
-from GeneralizingKinematics.magic.mixture import mdn
-from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
-from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
-from GeneralizingKinematics.magic.mixture.utils import *
 from matplotlib.ticker import FuncFormatter
+
+from dataset import ArticulationDataset, RigidTransformDataset
+from models import ScrewNet, ScrewNet_2imgs, ScrewNet_NoLSTM
+from utils import distance_bw_plucker_lines, difference_between_quaternions_tensors, interpret_labels_ours
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -38,9 +33,9 @@ if __name__ == "__main__":
     parser.add_argument('--model-name', type=str, default='test_lstm')
     parser.add_argument('--test-dir', type=str, default='../data/test/microwave/')
     parser.add_argument('--output-dir', type=str, default='./plots/')
-    parser.add_argument('--ntest', type=int, default=1, help='number of test samples (n_object_instants)')
+    parser.add_argument('--ntest', type=int, default=100, help='number of test samples (n_object_instants)')
     parser.add_argument('--ndof', type=int, default=1, help='how many degrees of freedom in the object class?')
-    parser.add_argument('--batch', type=int, default=128, help='batch size')
+    parser.add_argument('--batch', type=int, default=40, help='batch size')
     parser.add_argument('--nwork', type=int, default=8, help='num_workers')
     parser.add_argument('--device', type=int, default=0, help='cuda device')
     parser.add_argument('--dual-quat', action='store_true', default=False, help='Dual quaternion representation or not')
@@ -68,6 +63,11 @@ if __name__ == "__main__":
     global percent_scale
 
     if args.model_type == 'baseline':
+        from GeneralizingKinematics.magic.mixture import mdn
+        from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
+        from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
+        from GeneralizingKinematics.magic.mixture.utils import *
+
         print("Testing Model: Abbattematteo et al.")
         bounds = np.load(os.path.join(args.test_dir, 'bounds.npy'))
         keep_columns = np.load(os.path.abspath('../GeneralizingKinematics/keep_columns_' + args.obj + '.npy'))
@@ -219,8 +219,12 @@ if __name__ == "__main__":
             for X in testloader:
                 depth, labels = X['depth'].to(device), X['label'].to(device)
                 y_pred = best_model(depth)
-                y_pred = y_pred.view(y_pred.size(0), -1, 8)
-                y_pred = y_pred[:, 1:, :]
+                if args.model_type == '2imgs':
+                    y_pred.unsqueeze_(1)
+                    labels.unsqueeze_(1)
+                else:
+                    y_pred = y_pred.view(y_pred.size(0), -1, 8)
+                    y_pred = y_pred[:, 1:, :]
 
                 labels = interpret_labels_ours(labels, testset.normalization_factor)  # Scaling m appropriately
                 y_pred = interpret_labels_ours(y_pred, testset.normalization_factor)

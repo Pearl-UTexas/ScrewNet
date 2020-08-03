@@ -36,21 +36,6 @@ class ScrewNet(nn.Module):
         self.dropout_layer1 = nn.Dropout(p=self.drop_p)
         self.fc_lstm_3 = nn.Linear(self.fc_lstm_dim_2, self.n_output)
 
-        # # Initialization
-        # for m in self.modules():
-        #     if isinstance(m, nn.Linear):
-        #         nn.init.xavier_uniform_(m.weight)
-        #         m.bias.data.fill_(0.01)
-        #     elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-        #         nn.init.constant_(m.weight, 1)
-        #         nn.init.constant_(m.bias, 0)
-        #     elif isinstance(m, nn.LSTM):
-        #         for name, param in m.named_parameters():
-        #             if 'bias' in name:
-        #                 nn.init.constant_(param, 0.0)
-        #             elif 'weight' in name:
-        #                 nn.init.xavier_normal_(param)
-
     def forward(self, X_3d):
         # X shape: Batch x Sequence x 3 Channels x img_dims
         # Run resnet sequentially on the data to generate embedding sequence
@@ -129,7 +114,6 @@ class ScrewNet_2imgs(nn.Module):
         x_rnn = self.bn_mlp_3(x_rnn)
         x_rnn = self.fc_mlp_4(x_rnn)
         return x_rnn.view(X_3d.size(0), -1)
-
 
 
 class ScrewNet_NoLSTM(nn.Module):
