@@ -1,6 +1,6 @@
 # ScrewNet
 Code for the "**ScrewNet: Category-Independent Articulation Model Estimation From Depth Images Using Screw Theory**" 
-paper. Full paper available [here](https://arxiv.org/abs/2008.10518). [[Project webpage]()]  
+paper. Full paper available [here](https://arxiv.org/abs/2008.10518). [[Project webpage](https://pearl-utexas.github.io/ScrewNet/)]  
 
 ## Instruction to run the code
 
