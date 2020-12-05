@@ -10,7 +10,7 @@ Robots in human environments will need to interact with a wide variety of articu
 If you find this work useful in your own research, please consider citing:
 ```
 @inproceedings{jainscrewnet20,
-    author = {Jain, Ajinkya and Lioutikov, Rudolf and Niekum, Scott},
+    author = {Jain, Ajinkya and Lioutikov, Rudolf and Chuck, Caleb and Niekum, Scott},
     title = {ScrewNet: Category-Independent Articulation Model Estimation From Depth Images Using Screw Theory},
     booktitle = {arXiv preprint},
     year = {2020}
