@@ -20,8 +20,6 @@
 
 title: "ScrewNet: Category-Independent Articulation Model Estimation From Depth Images Using Screw Theory"
 description: "Ajinkya Jain, Rudolf Lioutikov, Caleb Chuck, and Scott Niekum <br> University of Texas at Austin"
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
 
 # Build settings
 theme: jekyll-theme-cayman
